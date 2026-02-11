@@ -26,13 +26,23 @@ class HospitalsScreen extends StatelessWidget {
         'longitude': 29.9187,
       },
     ];
+
     Future<void> _callHospital(String phone) async {
-      final Uri url = Uri.parse("tel:$phone");
-      if (!await launchUrl(url)) throw 'Could not launch $url';
+      final Uri url = Uri(scheme: 'tel', path: phone);
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("لا يمكن إجراء الاتصال")),
+        );
+      }
     }
+
     Future<void> _openMap(double lat, double lng) async {
       final Uri url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
-      if (!await launchUrl(url)) throw 'Could not launch $url';
+      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("لا يمكن فتح الخريطة")),
+        );
+      }
     }
 
     return Scaffold(
@@ -46,20 +56,39 @@ class HospitalsScreen extends StatelessWidget {
         itemCount: hospitals.length,
         itemBuilder: (context, index) {
           final hospital = hospitals[index];
-          return Card(
+          return Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xffff4b6e), Color(0xffff758f)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
             child: ListTile(
-              title: Text(hospital['name']),
-              leading: const Icon(Icons.local_hospital, color: Colors.red),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              title: Text(
+                hospital['name'],
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              leading: const Icon(Icons.local_hospital, color: Colors.white, size: 32),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.phone, color: Colors.green),
+                    icon: const Icon(Icons.phone, color: Colors.white),
                     onPressed: () => _callHospital(hospital['phone']),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.map, color: Colors.blue),
+                    icon: const Icon(Icons.map, color: Colors.white),
                     onPressed: () => _openMap(hospital['latitude'], hospital['longitude']),
                   ),
                 ],

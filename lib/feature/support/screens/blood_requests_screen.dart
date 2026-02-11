@@ -1,84 +1,186 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-class BloodRequestsScreen extends StatelessWidget {
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class BloodRequestsScreen extends StatefulWidget {
   const BloodRequestsScreen({super.key});
+
+  @override
+  State<BloodRequestsScreen> createState() => _BloodRequestsScreenState();
+}
+
+class _BloodRequestsScreenState extends State<BloodRequestsScreen> {
+  String? bloodType;
+  double amount = 250;
+  String? selectedGovernorate;
+  String? selectedHospital;
+  bool isLoading = false;
+
+  final List<String> bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  bool get isFormValid =>
+      bloodType != null && selectedGovernorate != null && selectedHospital != null;
+
+  InputDecoration inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.grey.shade100,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+
+  Future<void> sendRequest() async {
+    if (!isFormValid) return;
+
+    setState(() => isLoading = true);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    try {
+      await FirebaseFirestore.instance.collection('blood_requests').add({
+        'patientId': uid,
+        'bloodType': bloodType,
+        'amount': amount.toInt(),
+        'hospital': selectedHospital,
+        'governorate': selectedGovernorate,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'lastRequestDate': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("تم إرسال الطلب بنجاح ✅")));
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("حدث خطأ: $e")));
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("طلبات الدم"),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance.collection('blood_requests').snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-          final requests = snapshot.data!.docs;
-          if (requests.isEmpty) return const Center(child: Text("لا توجد طلبات دم"));
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(10),
-            itemCount: requests.length,
-            itemBuilder: (context, index) {
-              final data = requests[index].data();
-              final status = data['status'] ?? 'قيد الانتظار';
-              final statusColor = status == "مكتمل" ? Colors.green : Colors.orange;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  title: Text("المتبرع: ${data['donorName'] ?? 'غير محدد'}"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("الكمية: ${data['bagsNeeded'] ?? '-'}"),
-                      const SizedBox(height: 4),
-                      Text("الحالة: $status", style: TextStyle(color: statusColor)),
-                    ],
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (status != "مكتمل")
-                        IconButton(
-                          icon: const Icon(Icons.check_circle, color: Colors.green, size: 28),
-                          onPressed: () async {
-                            final docId = requests[index].id;
-                            await FirebaseFirestore.instance
-                                .collection('blood_requests')
-                                .doc(docId)
-                                .update({'status': 'مكتمل'});
-                            await FirebaseFirestore.instance.collection('donation_history').add({
-                              'donorName': data['donorName'] ?? 'غير محدد',
-                              'bagsDonated': data['bagsNeeded'] ?? '-',
-                              'timestamp': FieldValue.serverTimestamp(),
-                            });
-                          },
-                        ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert),
-                        onSelected: (value) {
-                          FirebaseFirestore.instance
-                              .collection('blood_requests')
-                              .doc(requests[index].id)
-                              .update({'status': value});
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: "مكتمل", child: Text("تم التبرع")),
-                          PopupMenuItem(value: "قيد الانتظار", child: Text("قيد الانتظار")),
-                        ],
-                      ),
-                    ],
+      appBar: AppBar(title: const Text("طلب دم"), backgroundColor: Colors.red),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ListView(
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: DropdownButtonFormField<String>(
+                  decoration: inputDecoration("اختر فصيلة الدم"),
+                  value: bloodType,
+                  items: bloodTypes
+                      .map((type) => DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  ))
+                      .toList(),
+                  onChanged: (val) => setState(() => bloodType = val),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text("الكمية: ${amount.toInt()} ml"),
+                    Slider(
+                      value: amount,
+                      min: 100,
+                      max: 500,
+                      divisions: 8,
+                      label: amount.toInt().toString(),
+                      activeColor: Colors.red,
+                      onChanged: (val) => setState(() => amount = val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('governorates').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const CircularProgressIndicator();
+                    final governorates = snapshot.data!.docs;
+                    return DropdownButtonFormField<String>(
+                      decoration: inputDecoration("اختر المحافظة"),
+                      value: selectedGovernorate,
+                      items: governorates
+                          .map((doc) => DropdownMenuItem<String>(
+                        value: doc['name'].toString(),
+                        child: Text(doc['name'].toString()),
+                      ))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          selectedGovernorate = val;
+                          selectedHospital = null;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (selectedGovernorate != null)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('governorates')
+                        .doc(selectedGovernorate)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const CircularProgressIndicator();
+                      final hospitals = snapshot.data!['hospitals'] as List<dynamic>;
+                      return DropdownButtonFormField<String>(
+                        decoration: inputDecoration("اختر المستشفى"),
+                        value: selectedHospital,
+                        items: hospitals
+                            .map((h) => DropdownMenuItem<String>(
+                          value: h.toString(),
+                          child: Text(h.toString()),
+                        ))
+                            .toList(),
+                        onChanged: (val) => setState(() => selectedHospital = val),
+                      );
+                    },
                   ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: isFormValid && !isLoading ? sendRequest : null,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("إرسال الطلب", style: TextStyle(fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

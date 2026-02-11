@@ -7,6 +7,7 @@ class DonorsListScreen extends StatefulWidget {
   @override
   State<DonorsListScreen> createState() => _DonorsListScreenState();
 }
+
 class _DonorsListScreenState extends State<DonorsListScreen> {
   String searchText = "";
   bool isAdding = false;
@@ -17,7 +18,7 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
   String bloodType = "A+";
 
   final List<String> bloodTypes = [
-    "A+","A-","B+","B-","AB+","AB-","O+","O-"
+    "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"
   ];
 
   @override
@@ -26,8 +27,10 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
     phoneController.dispose();
     super.dispose();
   }
+
   Future<void> addDonor() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => isAdding = true);
     try {
       await FirebaseFirestore.instance.collection('donors').add({
@@ -37,9 +40,11 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
         'available': true,
         'createdAt': FieldValue.serverTimestamp(),
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("تم إضافة المتبرع بنجاح")),
       );
+
       nameController.clear();
       phoneController.clear();
       bloodType = "A+";
@@ -53,16 +58,27 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
     }
   }
 
-  void showAddDonorDialog() {
-    showDialog(
+  void showAddDonorBottomSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("إضافة متبرع جديد"),
-        content: Form(
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text("إضافة متبرع جديد", style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: nameController,
                 decoration: const InputDecoration(labelText: "اسم المتبرع"),
@@ -82,16 +98,25 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
                 onChanged: (val) => setState(() => bloodType = val!),
                 decoration: const InputDecoration(labelText: "فصيلة الدم"),
               ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isAdding ? null : addDonor,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: isAdding
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("حفظ"),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("إلغاء")),
-          ElevatedButton(
-            onPressed: isAdding ? null : addDonor,
-            child: isAdding ? const CircularProgressIndicator(color: Colors.white) : const Text("حفظ"),
-          ),
-        ],
       ),
     );
   }
@@ -136,7 +161,7 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: showAddDonorDialog,
+            onPressed: showAddDonorBottomSheet,
           ),
         ],
       ),
@@ -151,7 +176,10 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
                 prefixIcon: Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15)), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
@@ -172,21 +200,32 @@ class _DonorsListScreenState extends State<DonorsListScreen> {
                   itemBuilder: (context, index) {
                     final donor = donors[index];
                     final lastDonation = _formatDate(donor['lastDonationDate']);
-                    return Card(
-                      elevation: 3,
+
+                    return Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: donor['available']
+                              ? [Colors.red.shade200, Colors.red.shade400]
+                              : [Colors.grey.shade300, Colors.grey.shade400],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                       child: ListTile(
-                        title: Text(donor['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(donor['name'], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("فصيلة الدم: ${donor['bloodType']}"),
-                            Text("آخر تبرع: $lastDonation", style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                            Text("فصيلة الدم: ${donor['bloodType']}", style: const TextStyle(color: Colors.white70)),
+                            Text("آخر تبرع: $lastDonation", style: const TextStyle(color: Colors.white70, fontSize: 13)),
                           ],
                         ),
                         trailing: ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: donor['available'] ? Colors.green : Colors.grey),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: donor['available'] ? Colors.green : Colors.grey,
+                          ),
                           onPressed: donor['available'] ? () => markAsDonated(donor.id, donor) : null,
                           child: Text(donor['available'] ? "تم التبرع" : "تم"),
                         ),

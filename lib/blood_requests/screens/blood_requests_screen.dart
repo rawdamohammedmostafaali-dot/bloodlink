@@ -13,7 +13,7 @@ class BloodRequestsScreen extends StatelessWidget {
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: 5, // عدد الطلبات مؤقتًا
+        itemCount: 5,
         itemBuilder: (context, index) {
           return _BloodRequestCard();
         },
