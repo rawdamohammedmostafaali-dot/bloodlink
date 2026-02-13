@@ -32,7 +32,6 @@ class _PatientDashboardState extends State<PatientDashboard> {
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
         onPressed: () {
-          // زر لإضافة طلب دم جديد
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("إضافة طلب دم جديد")),
           );

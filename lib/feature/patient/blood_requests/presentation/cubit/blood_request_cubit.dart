@@ -1,93 +1,78 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blood_request_state.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RequestBloodCubit extends Cubit<RequestBloodState> {
-  RequestBloodCubit() : super(RequestBloodLoading());
+  RequestBloodCubit() : super(RequestBloodUpdated(governorates: [], hospitals: []));
+  final List<Map<String, dynamic>> governorates = [
+    {"name": "القاهرة", "hospitals": ["مستشفى الدم الرئيسي", "مستشفى النيل التخصصي", "مركز الدم السادس من أكتوبر"]},
+    {"name": "الجيزة", "hospitals": ["مستشفى الجيزة العام", "مركز الدم الجيزة", "مستشفى الملك فيصل"]},
+    {"name": "الإسكندرية", "hospitals": ["مستشفى سموحة", "مستشفى الإسكندرية العام", "مركز الدم الإسكندرية"]},
+    {"name": "الدقهلية", "hospitals": ["مستشفى المنصورة العام", "مستشفى دم المنصورة"]},
+    {"name": "البحيرة", "hospitals": ["مستشفى دمنهور المركزي", "مستشفى أبو حمص"]},
+    {"name": "المنوفية", "hospitals": ["مستشفى شبين الكوم العام", "مركز الدم المنوفية"]},
+    {"name": "الغربية", "hospitals": ["مستشفى طنطا العام", "مركز الدم الغربية"]},
+    {"name": "القليوبية", "hospitals": ["مستشفى بنها العام", "مركز الدم القليوبية"]},
+    {"name": "الشرقية", "hospitals": ["مستشفى الزقازيق العام", "مركز الدم الشرقية"]},
+    {"name": "السويس", "hospitals": ["مستشفى السويس العام", "مركز الدم السويس"]},
+    {"name": "الإسماعيلية", "hospitals": ["مستشفى الإسماعيلية العام", "مركز الدم الإسماعيلية"]},
+    {"name": "بني سويف", "hospitals": ["مستشفى بني سويف العام", "مركز الدم بني سويف"]},
+    {"name": "الفيوم", "hospitals": ["مستشفى الفيوم العام", "مركز الدم الفيوم"]},
+    {"name": "المنيا", "hospitals": ["مستشفى المنيا العام", "مركز الدم المنيا"]},
+    {"name": "أسيوط", "hospitals": ["مستشفى أسيوط العام", "مركز الدم أسيوط"]},
+    {"name": "سوهاج", "hospitals": ["مستشفى سوهاج العام", "مركز الدم سوهاج"]},
+    {"name": "قنا", "hospitals": ["مستشفى قنا العام", "مركز الدم قنا"]},
+    {"name": "الأقصر", "hospitals": ["مستشفى الأقصر العام", "مركز الدم الأقصر"]},
+    {"name": "أسوان", "hospitals": ["مستشفى أسوان العام", "مركز الدم أسوان"]},
+    {"name": "البحر الأحمر", "hospitals": ["مستشفى الغردقة العام", "مركز الدم البحر الأحمر"]},
+    {"name": "الوادي الجديد", "hospitals": ["مستشفى الخارجة العام", "مركز الدم الوادي الجديد"]},
+    {"name": "شمال سيناء", "hospitals": ["مستشفى العريش العام", "مركز الدم شمال سيناء"]},
+    {"name": "جنوب سيناء", "hospitals": ["مستشفى شرم الشيخ", "مركز الدم جنوب سيناء"]},
+    {"name": "مطروح", "hospitals": ["مستشفى مرسى مطروح", "مركز الدم مطروح"]}
+  ];
 
-  /// خريطة المحافظات مع المستشفيات
-  final Map<String, List<String>> governoratesHospitals = {
-    'القاهرة': ['القصر العيني', 'دار الفؤاد', 'مستشفى الهلال', 'مستشفى النيل', 'الدمرداش', 'الشروق'],
-    'الجيزة': ['6 أكتوبر', 'الهرم', 'الشيخ زايد', 'الجيزة العام', 'الحوامدية'],
-    'الإسكندرية': ['شرق الإسكندرية', 'كليوباترا', 'الجامعي', 'العامرية', 'برج العرب'],
-    'القليوبية': ['القليوبية العام', 'بنها', 'شبرا الخيمة'],
-    'الشرقية': ['الزقازيق العام', 'بلبيس', 'العاشر من رمضان', 'أبوحماد'],
-    'الدقهلية': ['المنصورة العام', 'دكرنس', 'طلخا'],
-    'المنوفية': ['شبين الكوم', 'السادات', 'منوف'],
-    'البحيرة': ['دمنهور', 'رشيد', 'كفر الدوار'],
-    'الغربية': ['طنطا العام', 'المحلة الكبرى', 'كفر الزيات'],
-    'كفر الشيخ': ['كفر الشيخ العام', 'برج البرلس'],
-    'الفيوم': ['الفيوم العام', 'سنورس'],
-    'بني سويف': ['بني سويف العام', 'اهناسيا'],
-    'المنيا': ['المنيا العام', 'مغاغة'],
-    'أسيوط': ['أسيوط الجامعي', 'أسيوط العام'],
-    'سوهاج': ['سوهاج العام', 'أخميم', 'جرجا'],
-    'قنا': ['قنا العام', 'نجع حمادي'],
-    'الأقصر': ['الأقصر العام', 'إسنا'],
-    'أسوان': ['أسوان العام', 'كوم أمبو'],
-    'بورسعيد': ['بورسعيد العام'],
-    'دمياط': ['دمياط العام', 'رأس البر'],
-    'الإسماعيلية': ['الإسماعيلية العام', 'بورسعيد'],
-    'شمال سيناء': ['العريش', 'رفح'],
-    'جنوب سيناء': ['شرم الشيخ', 'دهب'],
-    'الوادي الجديد': ['الخارجة', 'باريس'],
-    'مطروح': ['مرسى مطروح', 'الحمام'],
-    'البحر الأحمر': ['الغردقة', 'مرسى علم']
-  };
-
-  /// تحميل المحافظات
-  void loadGovernorates() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    emit(RequestBloodUpdated(governorates: governoratesHospitals.keys.toList()));
-  }
-
-  /// اختيار فصيلة الدم
-  void selectBloodType(String type) {
-    final currentState = state as RequestBloodUpdated;
-    emit(currentState.copyWith(bloodType: type));
-  }
-
-  /// تعديل كمية الدم
-  void setAmount(double value) {
-    final currentState = state as RequestBloodUpdated;
-    emit(currentState.copyWith(amount: value));
-  }
-
-  /// اختيار المحافظة
-  void selectGovernorate(String gov) {
-    final currentState = state as RequestBloodUpdated;
-    emit(currentState.copyWith(
-      selectedGovernorate: gov,
-      selectedHospital: null,
+  void loadGovernorates() {
+    emit(RequestBloodUpdated(
+      governorates: governorates.map((g) => g['name'] as String).toList(),
       hospitals: [],
     ));
   }
 
-  /// تحميل المستشفيات حسب المحافظة
-  void loadHospitals(String governorate) async {
-    final currentState = state as RequestBloodUpdated;
-    await Future.delayed(const Duration(milliseconds: 200));
+  void selectGovernorate(String governorateName) {
+    final hospitalsList = governorates
+        .firstWhere((g) => g['name'] == governorateName)['hospitals'] as List<String>;
 
-    List<String> hospitals = governoratesHospitals[governorate] ?? ['مستشفى عام'];
-
-    emit(currentState.copyWith(
-      hospitals: hospitals,
+    emit((state as RequestBloodUpdated).copyWith(
+      selectedGovernorate: governorateName,
       selectedHospital: null,
+      hospitals: hospitalsList,
     ));
   }
 
-  /// اختيار المستشفى
-  void selectHospital(String hospital) {
-    final currentState = state as RequestBloodUpdated;
-    emit(currentState.copyWith(selectedHospital: hospital));
+  void selectHospital(String hospitalName) {
+    emit((state as RequestBloodUpdated).copyWith(selectedHospital: hospitalName));
   }
 
-  /// إرسال الطلب
-  void sendRequest(String uid) async {
-    var currentState = state as RequestBloodUpdated;
-    emit(currentState.copyWith(isLoading: true));
+  void selectBloodType(String type) {
+    emit((state as RequestBloodUpdated).copyWith(bloodType: type));
+  }
 
+  void setAmount(double value) {
+    emit((state as RequestBloodUpdated).copyWith(amount: value));
+  }
+
+  Future<void> sendRequest(String uid) async {
     try {
-      await Future.delayed(const Duration(seconds: 1)); // محاكاة إرسال الطلب
+      emit((state as RequestBloodUpdated).copyWith(isLoading: true));
+      await FirebaseFirestore.instance.collection('blood_requests').add({
+        "userId": uid,
+        "bloodType": (state as RequestBloodUpdated).bloodType,
+        "amount": (state as RequestBloodUpdated).amount,
+        "governorate": (state as RequestBloodUpdated).selectedGovernorate,
+        "hospital": (state as RequestBloodUpdated).selectedHospital,
+        "timestamp": FieldValue.serverTimestamp(),
+      });
+
       emit(RequestBloodSentSuccess());
     } catch (e) {
       emit(RequestBloodError(e.toString()));

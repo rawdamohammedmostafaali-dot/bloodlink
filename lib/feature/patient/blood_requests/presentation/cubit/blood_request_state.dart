@@ -1,9 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-abstract class RequestBloodState extends Equatable {
-  @override
-  List<Object?> get props => [];
-}
+abstract class RequestBloodState {}
 
 class RequestBloodLoading extends RequestBloodState {}
 
@@ -17,8 +12,8 @@ class RequestBloodUpdated extends RequestBloodState {
   final bool isLoading;
 
   RequestBloodUpdated({
-    this.governorates = const [],
-    this.hospitals = const [],
+    required this.governorates,
+    required this.hospitals,
     this.selectedGovernorate,
     this.selectedHospital,
     this.bloodType,
@@ -27,11 +22,7 @@ class RequestBloodUpdated extends RequestBloodState {
   });
 
   bool get isFormValid =>
-      bloodType != null &&
-          amount >= 100 &&
-          amount <= 500 &&
-          selectedGovernorate != null &&
-          selectedHospital != null;
+      bloodType != null && selectedGovernorate != null && selectedHospital != null;
 
   RequestBloodUpdated copyWith({
     List<String>? governorates,
@@ -52,17 +43,6 @@ class RequestBloodUpdated extends RequestBloodState {
       isLoading: isLoading ?? this.isLoading,
     );
   }
-
-  @override
-  List<Object?> get props => [
-    governorates,
-    hospitals,
-    selectedGovernorate,
-    selectedHospital,
-    bloodType,
-    amount,
-    isLoading
-  ];
 }
 
 class RequestBloodSentSuccess extends RequestBloodState {}
@@ -70,7 +50,4 @@ class RequestBloodSentSuccess extends RequestBloodState {}
 class RequestBloodError extends RequestBloodState {
   final String error;
   RequestBloodError(this.error);
-
-  @override
-  List<Object?> get props => [error];
 }

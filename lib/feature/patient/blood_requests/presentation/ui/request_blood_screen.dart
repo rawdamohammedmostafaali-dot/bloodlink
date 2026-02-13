@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../blood_requests/presentation/cubit/blood_request_cubit.dart';
-import '../../../blood_requests/presentation/cubit/blood_request_state.dart';
+
+import '../cubit/blood_request_cubit.dart';
+import '../cubit/blood_request_state.dart';
 
 class RequestBloodScreen extends StatelessWidget {
   const RequestBloodScreen({super.key});
-
   InputDecoration inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
@@ -17,7 +17,6 @@ class RequestBloodScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget sectionCard({required Widget child}) {
     return Card(
       elevation: 3,
@@ -83,7 +82,8 @@ class RequestBloodScreen extends StatelessWidget {
                             Text(
                               "الكمية المطلوبة: ${state.amount.toInt()} ml",
                               textAlign: TextAlign.right,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             Slider(
                               value: state.amount,
@@ -96,6 +96,7 @@ class RequestBloodScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+
                       sectionCard(
                         child: DropdownButtonFormField<String>(
                           decoration: inputDecoration("اختر المحافظة"),
@@ -107,10 +108,7 @@ class RequestBloodScreen extends StatelessWidget {
                           ))
                               .toList(),
                           onChanged: (val) {
-                            if (val != null) {
-                              cubit.selectGovernorate(val);
-                              cubit.loadHospitals(val);
-                            }
+                            if (val != null) cubit.selectGovernorate(val);
                           },
                         ),
                       ),
@@ -130,25 +128,31 @@ class RequestBloodScreen extends StatelessWidget {
                             },
                           ),
                         ),
+
                       const SizedBox(height: 16),
                       SizedBox(
                         height: 50,
                         child: ElevatedButton(
                           onPressed: state.isFormValid && !state.isLoading
                               ? () {
-                            final uid = FirebaseAuth.instance.currentUser!.uid;
+                            final uid =
+                                FirebaseAuth.instance.currentUser!.uid;
                             cubit.sendRequest(uid);
                           }
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: state.isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text("إرسال الطلب", style: TextStyle(fontSize: 18)),
+                              ? const CircularProgressIndicator(
+                              color: Colors.white)
+                              : const Text("إرسال الطلب",
+                              style: TextStyle(fontSize: 18)),
                         ),
                       ),
+
                       const SizedBox(height: 16),
                     ],
                   );

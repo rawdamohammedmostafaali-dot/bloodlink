@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../support/screens/add_staff_screen.dart';
-import '../../support/screens/staff_list_screen.dart';
+import '../../list/presentation/ui/donors_list_screen.dart';
+import '../../list/presentation/ui/patient_list_screen.dart';
+import '../../list/presentation/ui/staff_list_screen.dart';
+import '../../staff/presentation/ui/add_staff_screen.dart';
+
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +21,7 @@ class AdminHomeScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFFE5E5), Color(0xFFFF7F7F)], // خلفية وردي فاتح إلى أحمر دافئ
+            colors: [Color(0xFFFFE5E5), Color(0xFFFF7F7F)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -28,55 +32,105 @@ class AdminHomeScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () {
+
+                /// إضافة موظف
+                _buildButton(
+                  context,
+                  title: "إضافة موظف",
+                  icon: Icons.person_add,
+                  color: Colors.red.shade400,
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const AddStaffScreen()),
+                      MaterialPageRoute(builder: (_) =>  AddStaffScreen()),
                     );
                   },
-                  icon: const Icon(Icons.person_add, size: 28,color: Colors.black87,),
-                  label: const Text(
-                    "إضافة موظف",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,color: Colors.black87),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 60),
-                    backgroundColor: Colors.red.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    shadowColor: Colors.black26,
-                    elevation: 6,
-                  ),
                 ),
-                const SizedBox(height: 25),
-                ElevatedButton.icon(
-                  onPressed: () {
+
+                const SizedBox(height: 20),
+
+                /// قائمة الموظفين
+                _buildButton(
+                  context,
+                  title: "قائمة الموظفين",
+                  icon: Icons.list_alt,
+                  color: Colors.pink.shade400,
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const StaffListScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const StaffListScreen()),
                     );
                   },
-                  icon: const Icon(Icons.list_alt, size: 28,color: Colors.black87,),
-                  label: const Text(
-                    "قائمة الموظفين",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,color: Colors.black87),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 60),
-                    backgroundColor: Colors.pink.shade400,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    shadowColor: Colors.black26,
-                    elevation: 6,
-                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// قائمة المتبرعين
+                _buildButton(
+                  context,
+                  title: "قائمة المتبرعين",
+                  icon: Icons.volunteer_activism,
+                  color: Colors.red.shade300,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => DonorsListScreen()),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                /// قائمة المرضى
+                _buildButton(
+                  context,
+                  title: "قائمة المرضى",
+                  icon: Icons.local_hospital,
+                  color: Colors.pink.shade300,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PatientsListScreen()),
+                    );
+                  },
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildButton(
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required Color color,
+        required VoidCallback onTap,
+      }) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 28, color: Colors.black87),
+      label: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 60),
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25),
+        ),
+        shadowColor: Colors.black26,
+        elevation: 6,
       ),
     );
   }

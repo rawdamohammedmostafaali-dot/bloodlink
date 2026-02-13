@@ -5,8 +5,6 @@ import 'cubit/doner_donations_state.dart';
 
 class DonorDonationsScreen extends StatelessWidget {
   const DonorDonationsScreen({super.key});
-
-  // دالة لتحديد Gradient حسب الحالة
   LinearGradient getStatusGradient(String status) {
     switch (status.toLowerCase()) {
       case 'accepted':
@@ -23,8 +21,6 @@ class DonorDonationsScreen extends StatelessWidget {
         );
     }
   }
-
-  // أيقونة حسب الحالة
   IconData getStatusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'accepted':
@@ -39,8 +35,6 @@ class DonorDonationsScreen extends StatelessWidget {
         return Icons.help_outline;
     }
   }
-
-  // دالة لتنسيق التاريخ
   String formatDate(DateTime date) {
     return "${date.day}/${date.month}/${date.year}";
   }

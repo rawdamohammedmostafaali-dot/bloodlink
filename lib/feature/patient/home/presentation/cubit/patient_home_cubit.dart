@@ -7,13 +7,11 @@ class PatientCubit extends Cubit<PatientHomeState> {
   PatientCubit() : super(PatientLoading());
 
   final _firestore = FirebaseFirestore.instance;
-
-  // تحميل بيانات آخر طلب دم للمريض
   Future<void> loadPatientData() async {
     emit(PatientLoading());
 
     try {
-      final uid = "PUT_PATIENT_UID_HERE"; // لاحقًا خليها من FirebaseAuth
+      final uid = "PUT_PATIENT_UID_HERE";
       final querySnapshot = await _firestore
           .collection('blood_requests')
           .where('patientId', isEqualTo: uid)

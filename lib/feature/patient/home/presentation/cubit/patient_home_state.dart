@@ -6,11 +6,7 @@ abstract class PatientHomeState extends Equatable {
   @override
   List<Object?> get props => [];
 }
-
-// حالة تحميل البيانات
 class PatientLoading extends PatientHomeState {}
-
-// حالة وجود خطأ
 class PatientError extends PatientHomeState {
   final String message;
   const PatientError(this.message);
@@ -18,8 +14,6 @@ class PatientError extends PatientHomeState {
   @override
   List<Object?> get props => [message];
 }
-
-// حالة البيانات جاهزة
 class PatientLoaded extends PatientHomeState {
   final Map<String, dynamic>? lastRequest;
 

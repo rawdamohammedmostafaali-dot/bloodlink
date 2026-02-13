@@ -5,8 +5,8 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthSuccess extends AuthState {
-  final String role; // patient أو donor
-  AuthSuccess(this.role);
+  final String role;
+  AuthSuccess({required this.role});
 }
 
 class AuthError extends AuthState {
