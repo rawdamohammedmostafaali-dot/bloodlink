@@ -23,7 +23,6 @@ class RegisterCubit extends Cubit<RegisterState> {
     emit(RegisterLoading());
 
     try {
-      // تسجيل المستخدم في Firebase Auth
       UserCredential userCredential =
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
@@ -31,8 +30,6 @@ class RegisterCubit extends Cubit<RegisterState> {
       );
 
       final uid = userCredential.user!.uid;
-
-      // حفظ بيانات المستخدم في Firestore
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'name': name,
         'email': email,

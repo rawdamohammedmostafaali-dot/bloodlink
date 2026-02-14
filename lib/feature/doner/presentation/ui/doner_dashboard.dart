@@ -72,8 +72,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
       ),
       body: Column(
         children: [
-
-          /// 👤 بيانات المتبرع
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -91,8 +89,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
           ),
 
           const SizedBox(height: 8),
-
-          /// 🩸 طلبات الدم المناسبة
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -142,7 +138,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green),
                           onPressed: () async {
-                            /// حفظ التبرع
                             await FirebaseFirestore.instance
                                 .collection('donation_history')
                                 .add({
@@ -155,8 +150,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
                               'requestId': docId,
                               'date': Timestamp.now(),
                             });
-
-                            /// تحديث الطلب
                             await FirebaseFirestore.instance
                                 .collection('blood_requests')
                                 .doc(docId)
@@ -183,8 +176,6 @@ class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
           ),
 
           const Divider(),
-
-          /// 📜 سجل التبرعات
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: Text("سجل التبرعات السابقة",

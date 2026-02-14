@@ -4,6 +4,8 @@ import 'list_state.dart';
 
 class PatientsCubit extends Cubit<PatientsState> {
   PatientsCubit() : super(PatientsInitial());
+
+  get governorates => null;
   void fetchPatients() async {
     try {
       emit(PatientsLoading());
@@ -22,4 +24,8 @@ class PatientsCubit extends Cubit<PatientsState> {
       emit(PatientsError("فشل في جلب البيانات: ${e.toString()}"));
     }
   }
+
+  void filterPatients({required String bloodType, required String governorate}) {}
+
+  Future<void> markAsDonated(patientId) async {}
 }

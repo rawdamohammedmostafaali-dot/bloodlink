@@ -14,7 +14,7 @@ class DonorDonationsCubit extends Cubit<DonorDonationsState> {
       final querySnapshot = await _firestore
           .collection('donations')
           .where('donorId', isEqualTo: donorId)
-          .orderBy('date', descending: true) // لو Firebase طلب index هيظهر رابط
+          .orderBy('date', descending: true)
           .limit(50)
           .get();
 

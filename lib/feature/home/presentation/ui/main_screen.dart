@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../widgets/CustomBottomNav.dart';
-import 'home_screen.dart';       // الهوم الحالي بتاعك
-import 'notifications_screen.dart';   // صفحة طلبات الدم
-import 'profile_screen.dart';    // صفحة البروفايل
+import 'notifications_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

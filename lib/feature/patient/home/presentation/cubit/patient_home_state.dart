@@ -6,7 +6,9 @@ abstract class PatientHomeState extends Equatable {
   @override
   List<Object?> get props => [];
 }
+
 class PatientLoading extends PatientHomeState {}
+
 class PatientError extends PatientHomeState {
   final String message;
   const PatientError(this.message);
@@ -14,11 +16,13 @@ class PatientError extends PatientHomeState {
   @override
   List<Object?> get props => [message];
 }
+
 class PatientLoaded extends PatientHomeState {
   final Map<String, dynamic>? lastRequest;
+  final Map<String, dynamic>? userData;
 
-  const PatientLoaded({this.lastRequest});
+  const PatientLoaded({this.lastRequest, this.userData});
 
   @override
-  List<Object?> get props => [lastRequest ?? {}];
+  List<Object?> get props => [lastRequest, userData];
 }

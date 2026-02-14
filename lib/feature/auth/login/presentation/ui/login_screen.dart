@@ -1,8 +1,7 @@
+import 'package:bloodlink/feature/patient/home/presentation/ui/patient_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../../home/doner/presentation/ui/doner_home_screen.dart';
-import '../../../../patient/home/presentation/ui/patient_home_screen.dart';
+import '../../../../home/presentation/ui/doner_home_screen.dart';
 import '../../../login_admin/presentation/ui/admin_login_screen.dart';
 import '../../../login_staff/presentation/ui/staff_login_screen.dart';
 import '../../../register/presentation/ui/register_screen.dart';
@@ -40,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
             } else if (state.role == 'donor') {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const DonorHomeScreen()),
+                MaterialPageRoute(builder: (_) => DonorHomeScreen()),
               );
             }
           }
@@ -79,8 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      // Card تسجيل الدخول
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -120,8 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 18),
-
-                            // Password
                             TextField(
                               controller: passwordController,
                               obscureText: hidePassword,
@@ -146,8 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 30),
-
-                            // Login Button
                             Container(
                               width: double.infinity,
                               height: 52,
@@ -184,8 +177,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
 
                             const SizedBox(height: 12),
-
-                            // Register
                             TextButton(
                               onPressed: () {
                                 Navigator.push(
@@ -200,8 +191,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       const SizedBox(height: 25),
-
-                      // Admin & Staff Buttons
                       Row(
                         children: [
                           Expanded(

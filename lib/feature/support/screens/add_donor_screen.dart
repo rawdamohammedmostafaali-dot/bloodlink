@@ -1,184 +1,123 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class AddDonorScreen extends StatefulWidget {
+import '../../home/doner/presentation/cubit/doner_cubit.dart';
+import '../../home/doner/presentation/cubit/doner_state.dart';
+
+class AddDonorScreen extends StatelessWidget {
   const AddDonorScreen({super.key});
 
   @override
-  State<AddDonorScreen> createState() => _AddDonorScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => DonorsCubit()..fetchDonors(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("إدارة المتبرعين"),
+          backgroundColor: Colors.red,
+          actions: [
+            Builder(builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => _showAddDonorBottomSheet(context),
+              );
+            }),
+          ],
+        ),
+        body: const DonorsListWidget(),
+      ),
+    );
+  }
+
+  void _showAddDonorBottomSheet(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+    String bloodType = "A+";
+    final donorsCubit = context.read<DonorsCubit>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)), // صح
+      ),
+      builder: (_) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 20, right: 20, top: 20),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("إضافة متبرع جديد", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  TextFormField(controller: nameController, decoration: const InputDecoration(labelText: "الاسم"), validator: (v) => v!.isEmpty ? "مطلوب" : null),
+                  TextFormField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "الهاتف"), validator: (v) => v!.isEmpty ? "مطلوب" : null),
+                  DropdownButtonFormField<String>(
+                    value: bloodType,
+                    items: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                    onChanged: (v) => setState(() => bloodType = v!),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        await donorsCubit.addDonor(name: nameController.text, phone: phoneController.text, bloodType: bloodType);
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text("حفظ البيانات"),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
 }
 
-class _AddDonorScreenState extends State<AddDonorScreen> {
-  final _formKey = GlobalKey<FormState>();
-
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  String bloodType = "A+";
-  bool isLoading = false;
-
-  final List<String> bloodTypes = [
-    "A+","A-","B+","B-","AB+","AB-","O+","O-"
-  ];
-
-  Future<void> addDonor() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => isLoading = true);
-
-    await FirebaseFirestore.instance.collection('donors').add({
-      'name': nameController.text.trim(),
-      'phone': phoneController.text.trim(),
-      'bloodType': bloodType,
-      'available': true,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    setState(() => isLoading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("تم إضافة المتبرع بنجاح")),
-    );
-
-    Navigator.pop(context);
-  }
+class DonorsListWidget extends StatelessWidget {
+  const DonorsListWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFEF5350), Color(0xFFFFCDD2)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Card(
-                elevation: 12,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+    return BlocBuilder<DonorsCubit, DonorsState>(
+      builder: (context, state) {
+        if (state is DonorsLoading) return const Center(child: CircularProgressIndicator());
+        if (state is DonorsError) return Center(child: Text(state.message));
+        if (state is DonorsLoaded) {
+          if (state.donors.isEmpty) return const Center(child: Text("لا يوجد متبرعين حالياً"));
+
+          return ListView.builder(
+            itemCount: state.donors.length,
+            itemBuilder: (context, index) {
+              final doc = state.donors[index];
+              final data = doc.data() as Map<String, dynamic>;
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  leading: const CircleAvatar(backgroundColor: Colors.red, child: Icon(Icons.person, color: Colors.white)),
+                  title: Text(data['name'] ?? 'بدون اسم'),
+                  subtitle: Text("فصيلة: ${data['bloodType']} | هاتف: ${data['phone']}"),
+                  trailing: (data['available'] ?? true)
+                      ? ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () => context.read<DonorsCubit>().markAsDonated(doc.id),
+                    child: const Text("تم التبرع", style: TextStyle(color: Colors.white)),
+                  )
+                      : const Icon(Icons.check_circle, color: Colors.green),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.bloodtype,
-                          size: 70,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "إضافة متبرع جديد",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        _buildField(
-                          controller: nameController,
-                          label: "اسم المتبرع",
-                          icon: Icons.person,
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildField(
-                          controller: phoneController,
-                          label: "رقم الهاتف",
-                          icon: Icons.phone,
-                          keyboardType: TextInputType.phone,
-                        ),
-                        const SizedBox(height: 16),
-
-                        DropdownButtonFormField<String>(
-                          value: bloodType,
-                          items: bloodTypes
-                              .map(
-                                (type) => DropdownMenuItem(
-                              value: type,
-                              child: Text(type),
-                            ),
-                          )
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() => bloodType = value!);
-                          },
-                          decoration: _inputDecoration(
-                            label: "فصيلة الدم",
-                            icon: Icons.bloodtype,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : addDonor,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              elevation: 6,
-                            ),
-                            child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text(
-                              "حفظ المتبرع",
-                              style: TextStyle(fontSize: 18),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: (value) =>
-      value == null || value.isEmpty ? "الحقل مطلوب" : null,
-      decoration: _inputDecoration(label: label, icon: icon),
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String label,
-    required IconData icon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: Colors.red),
-      filled: true,
-      fillColor: Colors.grey.shade100,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide.none,
-      ),
+              );
+            },
+          );
+        }
+        return const SizedBox();
+      },
     );
   }
 }

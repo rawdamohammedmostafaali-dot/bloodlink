@@ -1,44 +1,67 @@
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-part 'doner_state.dart';
-
+import 'doner_state.dart';
 class DonorCubit extends Cubit<DonorState> {
-  DonorCubit() : super(DonorLoading());
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  DonorCubit() : super(DonorInitial());
   Future<void> loadDonorData() async {
     emit(DonorLoading());
-
     try {
-      final user = _auth.currentUser;
-      if (user == null) {
-        emit(DonorError('المستخدم غير مسجل الدخول'));
-        return;
-      }
-
-      final userId = user.uid;
-
-      // جلب آخر تبرع باستخدام query متوافقة مع الـ index
-      final donationsQuery = await _firestore
+      final snapshot = await FirebaseFirestore.instance
           .collection('donations')
-          .where('donorId', isEqualTo: userId)
-          .orderBy('date', descending: true) // لازم يكون نفس الترتيب الموجود في index
+          .orderBy('date', descending: true)
           .limit(1)
           .get();
 
-      Map<String, dynamic>? lastDonation;
-      if (donationsQuery.docs.isNotEmpty) {
-        lastDonation = donationsQuery.docs.first.data();
+      if (snapshot.docs.isNotEmpty) {
+        emit(DonorLoaded(snapshot.docs.first.data()));
+      } else {
+        emit(const DonorLoaded(null));
       }
-
-      emit(DonorLoaded(lastDonation: lastDonation));
     } catch (e) {
-      emit(DonorError('حدث خطأ أثناء تحميل البيانات: $e'));
+      emit(DonorError("فشل تحميل البيانات: ${e.toString()}"));
+    }
+  }
+}
+class DonorsCubit extends Cubit<DonorsState> {
+  DonorsCubit() : super(DonorsInitial());
+
+  Future<void> fetchDonors() async {
+    emit(DonorsLoading());
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('donors')
+          .orderBy('createdAt', descending: true)
+          .get();
+      emit(DonorsLoaded(snapshot.docs));
+    } catch (e) {
+      emit(const DonorsError("حدث خطأ في تحميل البيانات"));
+    }
+  }
+
+  Future<void> addDonor({required String name, required String phone, required String bloodType}) async {
+    try {
+      await FirebaseFirestore.instance.collection('donors').add({
+        'name': name,
+        'phone': phone,
+        'bloodType': bloodType,
+        'available': true,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      fetchDonors();
+    } catch (e) {
+      emit(const DonorsError("فشل في إضافة المتبرع"));
+    }
+  }
+
+  Future<void> markAsDonated(String donorId) async {
+    try {
+      await FirebaseFirestore.instance.collection('donors').doc(donorId).update({
+        'available': false,
+        'lastDonationDate': FieldValue.serverTimestamp(),
+      });
+      fetchDonors();
+    } catch (e) {
+      emit(const DonorsError("فشل في تحديث الحالة"));
     }
   }
 }

@@ -8,8 +8,6 @@ class HomeCubit extends Cubit<HomeState> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // تحميل بيانات المستخدم
   Future<void> loadUserData() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {

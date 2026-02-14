@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../widgets/home_slider.dart';
+import '../../../auth/login/presentation/ui/login_screen.dart';
 import '../../../support/screens/add_donation_screen.dart';
 class DonorHomeScreen extends StatefulWidget {
   const DonorHomeScreen({super.key});
@@ -39,16 +40,26 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
 
     List<Widget> pages = [
       _buildHome(uid, name),
-      const Center(child: Text("الإشعارات")), // placeholder
-      const Center(child: Text("البروفايل")), // placeholder
+      const Center(child: Text("الإشعارات")),
+      const Center(child: Text("البروفايل")),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("مرحباً $name"),
+        title: const Text("قطرة دم"),
         backgroundColor: Colors.red,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          },
+        ),
       ),
+
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -92,7 +103,6 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
           children: [
             const HomeSlider(),
             const SizedBox(height: 16),
-            // بطاقة معلومات المتبرع
             FutureBuilder<int>(
               future: getMyDonationsCount(),
               builder: (context, snapshot) {
@@ -129,7 +139,6 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
               },
             ),
             const SizedBox(height: 16),
-            // زر حجز التبرع
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -159,3 +168,4 @@ class _DonorHomeScreenState extends State<DonorHomeScreen> {
     );
   }
 }
+
